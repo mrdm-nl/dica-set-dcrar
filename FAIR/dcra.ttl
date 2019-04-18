@@ -1,0 +1,442 @@
+@prefix rr: <http://www.w3.org/ns/r2rml#>.
+@prefix ex: <http://example.com/ns#>.
+@prefix map: <http://mapping.local/>.
+@prefix sty: <http://purl.bioontology.org/ontology/STY/>.
+@prefix sio: <http://semanticscience.org/resource/SIO_>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix ncit: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#>.
+@prefix roo: <http://www.cancerdata.org/roo/>.
+@prefix icd: <http://purl.bioontology.org/ontology/ICD10/>.
+@prefix skos: <http://www.w3.org/2008/05/skos#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix uo: <http://purl.obolibrary.org/obo/UO_>.
+@prefix time: <http://www.w3.org/2006/time#>.
+@prefix sedi: <http://semantic-dicom.org/dcm#>.
+
+
+map:patientQuery a rr:LogicalTable;
+    rr:sqlQuery """
+        SELECT idcode as id, upn, land, gebdat, geslacht, datovl
+        FROM patient
+    """;
+    rdfs:label """General patient and hospital characteristics. Each row should correspond to a unique patient""";
+    skos:definition "id,land,gebdat,geslacht,datovl".
+
+map:verrichtingQuery a rr:LogicalTable;
+    rr:sqlQuery """
+        SELECT b.id, 'radiotherapie' AS treatment_type, datrad1 AS first_fraction_date, datprertxstop AS last_fraction_date, diagplantijd, datplanningscan, rtxdos AS fraction_dose, rtxfrac AS fraction_count
+        FROM verrichting v JOIN bestralingsplan b ON v.id = b.id
+    """;
+    rdfs:label """General treatment characteristics. Each row should correspond to a unique patient""";
+    skos:definition "id,first_fraction_date,last_fraction_date,diagplantijd,datplanningscan,fraction_dose,fraction_count".
+
+map:dvh_dQuery a rr:LogicalTable;
+    rr:sqlQuery """
+        SELECT id, pat_id, structure_name, dvh_d_pct, dvh_d_gy
+        FROM dvh_d
+    """;
+    rdfs:label """every row is a unique DVH parameter. pat_id refers to patient""";
+    skos:definition "id, pat_id,structure_name,dvh_d_pct,dvh_d_gy".
+
+###########################################
+# Add patient
+###########################################
+map:patient a rr:TriplesMap;
+    rr:logicalTable map:patientQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}";
+        rr:class ncit:C16960;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate rdfs:label;
+        rr:objectMap [
+            rr:column "id"; 
+            rr:datatype xsd:string;
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100018;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:gender;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100327;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:dob;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100024;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:treatment;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100008;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:disease;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100028;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:dateDied;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ].
+
+######
+# gender
+######
+map:gender a rr:TriplesMap;
+    rr:logicalTable map:patientQuery;
+    rr:subjectMap [
+        rr:template "sex/geslacht";
+        rr:class ncit:C28421;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:local_value;
+        rr:objectMap [
+            rr:column "geslacht"; 
+            rr:datatype xsd:string;
+        ];
+    ].
+
+
+######
+# date of birth
+######
+map:dob a rr:TriplesMap;
+    rr:logicalTable map:patientQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/dob";
+        rr:class ncit:C25155;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100041;
+        rr:objectMap [
+            rr:column "gebdat"; 
+            rr:datatype xsd:dateTime;
+        ];
+    ].
+
+######
+# date of death
+######
+map:dateDied a rr:TriplesMap;
+    rr:logicalTable map:patientQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/died";
+        rr:class ncit:C28554;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100041;
+        rr:objectMap [
+            rr:column "datovl";
+            rr:datatype xsd:string;
+        ];
+    ].
+    
+##########################################
+# Disease
+##########################################
+map:disease a rr:TriplesMap;
+    rr:logicalTable map:patientQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/disease";
+        rr:class icd:C20;
+    ].
+
+##########################################
+# Treatment
+##########################################
+map:treatment a rr:TriplesMap;
+    rr:logicalTable map:verrichtingQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/treatment";
+        rr:class ncit:C15313;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:local_value;
+        rr:objectMap [
+            rr:column "treatment_type"; 
+            rr:datatype xsd:string;
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate sedi:ATT00080021;
+        rr:objectMap [
+            rr:column "datplanningscan"; 
+            rr:datatype xsd:date;
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100402;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:disease;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100023;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:treatment_planned_dose;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100298;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:treatment_delivered_dose;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ].
+
+map:treatment_planned_dose a rr:TriplesMap;
+    rr:logicalTable map:verrichtingQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/treatment/dose/planned";
+        rr:class sedi:RTPlan;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100224;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:treatment_planned_fractions;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100027;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:treatment_planned_fraction_dose_gy;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100260;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:dvh;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "pat_id";
+            ];
+        ];
+    ].
+
+map:dvh a rr:TriplesMap;
+    rr:logicalTable map:dvh_dQuery;
+    rr:subjectMap [
+        rr:template "patient/{pat_id}/treatment/dose/planned/dvh/{structure_name}";
+        rr:class ncit:C112816;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100213;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:structureDvh;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100212;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:structureDvhPoint;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ].
+
+map:structureDvhPoint a rr:TriplesMap;
+    rr:logicalTable map:dvh_dQuery;
+    rr:subjectMap [
+        rr:template "patient/{pat_id}/treatment/dose/planned/dvh/{structure_name}/d/{dvh_d_pct}";
+        rr:class roo:C100357;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100233;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:structureDvhPointPct;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100027;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:structureDvhPointGy;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ].
+map:structureDvhPointPct a rr:TriplesMap;
+    rr:logicalTable map:dvh_dQuery;
+    rr:subjectMap [
+        rr:template "patient/{pat_id}/treatment/dose/planned/dvh/{structure_name}/d/{dvh_d_pct}/pct";
+        rr:class uo:0000187;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100042;
+        rr:objectMap [
+            rr:column "dvh_d_pct"; 
+            rr:datatype xsd:double;
+        ];
+    ].
+map:structureDvhPointGy a rr:TriplesMap;
+    rr:logicalTable map:dvh_dQuery;
+    rr:subjectMap [
+        rr:template "patient/{pat_id}/treatment/dose/planned/dvh/{structure_name}/d/{dvh_d_pct}/gy";
+        rr:class uo:0000134;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100042;
+        rr:objectMap [
+            rr:column "dvh_d_gy"; 
+            rr:datatype xsd:double;
+        ];
+    ].
+
+map:structureDvh a rr:TriplesMap;
+    rr:logicalTable map:dvh_dQuery;
+    rr:subjectMap [
+        rr:template "structure/{structure_name}";
+        rr:class roo:C100067;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:local_value;
+        rr:objectMap [
+            rr:column "structure_name"; 
+            rr:datatype xsd:string;
+        ];
+    ].
+
+map:treatment_planned_fractions a rr:TriplesMap;
+    rr:logicalTable map:verrichtingQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/treatment/dose/planned/fractions";
+        rr:class roo:C100356;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100042;
+        rr:objectMap [
+            rr:column "fraction_count"; 
+            rr:datatype xsd:integer;
+        ];
+    ].
+
+map:treatment_planned_fraction_dose_gy a rr:TriplesMap;
+    rr:logicalTable map:verrichtingQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/treatment/dose/planned/fraction_dose";
+        rr:class roo:C100353;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100042;
+        rr:objectMap [
+            rr:column "fraction_dose"; 
+            rr:datatype xsd:double;
+        ];
+    ].
+
+# Delivered RT dose
+map:treatment_delivered_dose a rr:TriplesMap;
+    rr:logicalTable map:verrichtingQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/treatment/dose/delivered";
+        rr:class roo:C100012;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100269;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:treatment_first_fraction;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100269;
+        rr:objectMap [ 
+            rr:parentTriplesMap map:treatment_last_fraction;
+            rr:joinCondition [
+                rr:child "id";
+                rr:parent "id";
+            ];
+        ];
+    ].
+
+# First fraction
+map:treatment_first_fraction a rr:TriplesMap;
+    rr:logicalTable map:verrichtingQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/treatment/first_fraction";
+        rr:class roo:C100058;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100041;
+        rr:objectMap [
+            rr:column "first_fraction_date"; 
+            rr:datatype xsd:dateTime;
+        ];
+    ].
+
+# Last fraction
+map:treatment_last_fraction a rr:TriplesMap;
+    rr:logicalTable map:verrichtingQuery;
+    rr:subjectMap [
+        rr:template "patient/{id}/treatment/last_fraction";
+        rr:class roo:C100059;
+    ];
+    rr:predicateObjectMap [
+        rr:predicate roo:P100041;
+        rr:objectMap [
+            rr:column "last_fraction_date"; 
+            rr:datatype xsd:dateTime;
+        ];
+    ].
