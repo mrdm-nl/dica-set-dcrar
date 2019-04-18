@@ -1,9 +1,11 @@
 # Dutch ColoRectal Audit (DCRA)
 
 The Dutch Institute for Clinical Auditing (DICA) defines the Dutch
-ColoRectalAudit (see: https://dica.nl/dcra/home). This repository
-supplies meta-data and data-dictionaries for the radiotherapy part of the DCRA:
-called the DCRA-R.
+ColoRectalAudit (see: https://dica.nl/dcra/home). 
+
+## DCRA-R
+This repository supplies meta-data and data-dictionaries for the
+radiotherapy part of the DCRA: called the DCRA-R.
 
 ## FAIR data
 The Dutch Techcentre for Life Sciences (DTL) defines a FAIR data
