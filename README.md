@@ -1,5 +1,7 @@
 # DCRA-R
 
+Copyright © 2019 Stichting DICA. All rights reserved.
+
 This repository supplies meta-data and data-dictionaries for the
 radiotherapy part of the Dutch ColoRectal Audit: DCRA-R. Information
 about this metadata and the schemas itself are available in the

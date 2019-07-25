@@ -1,4 +1,7 @@
 # DCRA-R - FAIR
+
+Copyright © 2019 Stichting DICA. All rights reserved.
+
 The Dutch Techcentre for Life Sciences (DTL) defines a FAIR data
 initiative (see: https://www.dtls.nl/fair-data). FAIR stands for
 *F*indable *A*ccesible *I*nteroperable *R*eusable data. This
