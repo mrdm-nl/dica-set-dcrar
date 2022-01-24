@@ -30,4 +30,4 @@ found here: https://www.cancerdata.org/roo-information
 The R2RML is a condensed version of the full datadictionary to make
 the DCRAR interoperable. The full datadictionary, which includes
 information on data type, length and conditions, can be downloaded
-from https://documents.mrdm.nl/showcase/downloaden
+from https://support.mrdm.nl/documentatie/
